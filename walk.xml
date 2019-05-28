@@ -60,280 +60,497 @@ main.go -- Programs entry point
 	Every Go program that produces an executable has two distinct features: 
 	<br/> 
 	* The function main declared. 
+	<br/> 
 	* The package main
 	<br/> 
 	<br/> 
-the build tools to produce an executable, the function main must be declared, and it
-becomes the entry point for the program. The second feature can be found on line 01
-of program
+	In orde to produce an executable, the build tools need the function main declared, and it becomes the entry point for the program. The main function mustbe found in the packake main, otherwise the build tools won’t produce an executable.
+	<br/> 
+	<br/> 
+	Every code file in Go belongs to a package. A packages define a unit of compiled code
+	and their names help provide a level of indirection to the identifiers that are declared
+	inside of them, just like a namespace. This makes it possible to distinguish identifiers
+	that are declared with exactly the same name in the different packages you import.
 </step>
 
-<step title="The Chain struct" src="doc/codewalk/rssfeed/main.go:/type Chain/,/}/">
-	The complete state of the chain table consists of the table itself and
-	the word length of the prefixes. The <code>Chain</code> struct stores
-	this data.
+<step title="Imports" src="doc/codewalk/rssfeed/main.go:/import \(/,/\)/">
+	<code>Imports</code> import code and give you access to identifiers such as types,
+	functions, constants, and interfaces. In our case, the code in the main.go code file can
+	now reference the Run function from the search package, thanks to the imports highlighted in the section. 
 </step>
 
-<step title="The NewChain constructor function" src="doc/codewalk/main.go:/func New/,/\n}/">
-	The <code>Chain</code> struct has two unexported fields (those that
-	do not begin with an upper case character), and so we write a
-	<code>NewChain</code> constructor function that initializes the
-	<code>chain</code> map with <code>make</code> and sets the
-	<code>prefixLen</code> field.
-	<br/><br/>
-	This is constructor function is not strictly necessary as this entire
-	program is within a single package (<code>main</code>) and therefore
-	there is little practical difference between exported and unexported
-	fields. We could just as easily write out the contents of this function
-	when we want to construct a new Chain.
-	But using these unexported fields is good practice; it clearly denotes
-	that only methods of Chain and its constructor function should access
-	those fields. Also, structuring <code>Chain</code> like this means we
-	could easily move it into its own package at some later date.
+<step title="Standard library" src="doc/codewalk/rssfeed/main.go:/log/,/os/">
+
+	These two packages belong to the standard library. They ship with your installed golang compiler and are tested and verified by the golang maintainers. We here import <code>log</code> and <code>os</code> to use them later on in the code.
+	<br/>
+	<br/>
+	The exhaustive list of standard library packages can be found 
+	<code>
+		<a 	href="https://golang.org/pkg/#stdlib">
+			here.
+		</a>
+	</code>
 </step>
 
-<step title="The Prefix type" src="doc/codewalk/main.go:/type Prefix/">
-	Since we'll be working with prefixes often, we define a
-	<code>Prefix</code> type with the concrete type <code>[]string</code>.
-	Defining a named type clearly allows us to be explicit when we are
-	working with a prefix instead of just a <code>[]string</code>.
-	Also, in Go we can define methods on any named type (not just structs),
-	so we can add methods that operate on <code>Prefix</code> if we need to.
+<step title="Community and project packages" src="doc/codewalk/rssfeed/main.go:/_/,/\)/">
+
+	It is common practice to name the package after the folder. If your project is meant to be on github, a common practice is to have the project hierarchy shown in the import.
+	<br/>
+	<br/>
+	Golang also allows direct imports from package on github and elsewhere. This is very commonly used in opensource projects. Once you are familliar with the golang community, you'll find some packages really add up to the standard library. Otherwise, for a comparable feature, prefer using the standard library for more secure and better maintainable code.
 </step>
 
-<step title="The String method" src="doc/codewalk/main.go:/func[^\n]+String/,/}/">
-	The first method we define on <code>Prefix</code> is
-	<code>String</code>. It returns a <code>string</code> representation
-	of a <code>Prefix</code> by joining the slice elements together with
-	spaces. We will use this method to generate keys when working with
-	the chain map.
+<step title="The black identifier" src="doc/codewalk/rssfeed/main.go:/_/">
+
+	This is a technique in Go to allow initialization from a package to occur, even if you
+	don’t directly use any identifiers from the package. 
+	<br/>
+	<br/>
+	To make your programs more readable, the Go compiler won’t let you declare a package to be imported if it’s not used. It throws a compiler error, and <code>gofmt</code> integrated to a good IDE won't let you save that way. The blank identifier allows the compiler to accept the import and call any init functions that can be found in the different code files within that package. This is why it's useful.
+	<br/>
+	<br/>
+	For our program, this is required because the rss.go code file in the matchers package contains an init function to register the RSS matcher for use.
 </step>
 
-<step title="Another file" src="doc/codewalk/test.go:/func[^\n]+main/,/}/">
-	The first method we define on <code>Prefix</code> is
-	<code>String</code>. It returns a <code>string</code> representation
-	of a <code>Prefix</code> by joining the slice elements together with
-	spaces. We will use this method to generate keys when working with
-	the chain map.
+<step title="Init function" src="doc/codewalk/rssfeed/main.go:/ init/,/\)\n}/">
+
+	All <code>init</code> functions in any code file that are part of the program will get called before
+	the <code>main</code> function. This <code>init</code> function sets the <code>logger</code> from the standard library to write to the <code>stdout</code> device. By default, the logger is set to write to the stderr device
 </step>
 
-<step title="Yet another file" src="doc/codewalk/data.json:/cnn/,/}/">
-	The first method we define on <code>Prefix</code> is
-	<code>String</code>. It returns a <code>string</code> representation
-	of a <code>Prefix</code> by joining the slice elements together with
-	spaces. We will use this method to generate keys when working with
-	the chain map.
+<step title="Entrypoint to the program" src="doc/codewalk/rssfeed/main.go:/.*Run/,/$/">
+	Here you see a call to the Run function that belongs to the search package. This function contains the core business logic for the program, which requires a <code>string</code> for the search term. Once the Run function returns, the program will terminate.
 </step>
 
-<step title="Building the chain" src="doc/codewalk/main.go:/func[^\n]+Build/,/\n}/">
-	The <code>Build</code> method reads text from an <code>io.Reader</code>
-	and parses it into prefixes and suffixes that are stored in the
-	<code>Chain</code>.
-	<br/><br/>
-	The <code><a href="/pkg/io/#Reader">io.Reader</a></code> is an
-	interface type that is widely used by the standard library and
-	other Go code. Our code uses the
-	<code><a href="/pkg/fmt/#Fscan">fmt.Fscan</a></code> function, which
-	reads space-separated values from an <code>io.Reader</code>.
-	<br/><br/>
-	The <code>Build</code> method returns once the <code>Reader</code>'s
-	<code>Read</code> method returns <code>io.EOF</code> (end of file)
-	or some other read error occurs.
+<step title="The search term" src="doc/codewalk/rssfeed/main.go:/ Perform/,/.*Args\[1\]/">
+	We here initialize the search term for the program for one of the two things:
+	<br/> 
+	* The default keyword <code>"president"</code> 
+	<br/> 
+	* Any other word given as an argument to the program
+	<br/> 
+	<br/> 
+	
+	See how we use the <code>os</code> library to process the command line arguments. We only need one in this case. By default, similar to what happends in bash, the first command line argument is the name of the program. So we need to look for the second one (indice 1) in order to fetch for the keyword.
 </step>
 
-<step title="Buffering the input" src="doc/codewalk/main.go:/bufio\.NewReader/">
-	This function does many small reads, which can be inefficient for some
-	<code>Readers</code>. For efficiency we wrap the provided
-	<code>io.Reader</code> with
-	<code><a href="/pkg/bufio/">bufio.NewReader</a></code> to create a
-	new <code>io.Reader</code> that provides buffering.
+<step title="The Search package" src="doc/codewalk/rssfeed/search/search.go:/package/">
+	The search package contains the framework and business logic for the program. 
+	The package is organized into four different code files, each with a unique responsibility.
+	<br/> 
+	<br/> 
+	This package provides an abstraction for a matcher in the form of a <code>Matcher</code> interface with a <code>Search</code> method, that returns a set of results in the form of <code>Result struct</code>. The logic is to match the keyword and look for it in a set of rss feeds given in JSON file
 </step>
 
-<step title="The Prefix variable" src="doc/codewalk/main.go:/make\(Prefix/">
-	At the top of the function we make a <code>Prefix</code> slice
-	<code>p</code> using the <code>Chain</code>'s <code>prefixLen</code>
-	field as its length.
-	We'll use this variable to hold the current prefix and mutate it with
-	each new word we encounter.
+<step title="Imports" src="doc/codewalk/rssfeed/search/search.go:/package/,/.*Matcher\)/">
+	Each code file will contain the keyword package at the top with a name
+	for the package. Each code file in the search folder will contain search for the package name. We here import packages <code>log</code> and <code>sync</code> from the standard library. 
+	<br/> 
+	<br/> 
+	When you import code from the standard library, you only need to reference the
+	name of the package, unlike when you import code from outside of the standard
+	library. The compiler will always look for the packages you import at the locations referenced by the GOROOT and GOPATH environment variables.
+	<br/> 
+	<br/> 
+	The log package provides support for logging messages to the stdout, stderr, or even
+	custom devices. The sync package provides support for synchronizing goroutines,
+	which is required by our program.
 </step>
 
-<step title="Scanning words" src="doc/codewalk/main.go:/var s string/,/\n		}/">
-	In our loop we read words from the <code>Reader</code> into a
-	<code>string</code> variable <code>s</code> using
-	<code>fmt.Fscan</code>. Since <code>Fscan</code> uses space to
-	separate each input value, each call will yield just one word
-	(including punctuation), which is exactly what we need.
-	<br/><br/>
-	<code>Fscan</code> returns an error if it encounters a read error
-	(<code>io.EOF</code>, for example) or if it can't scan the requested
-	value (in our case, a single string). In either case we just want to
-	stop scanning, so we <code>break</code> out of the loop.
+<step title="Map" src="doc/codewalk/rssfeed/search/search.go:/.*A map/,/.*Matcher\)/">
+	This variable is located outside the scope of any function and so <code>is considered a
+	package-level variable</code>. 
+	The variable is declared using the keyword var and is declared as a map of Matcher type values with a key of type string. The declaration for the Matcher type can be found in the match.go code file. There’s another important aspect of this variable declaration: <code> the name of the variable matchers starts with a lowercase letter. </code>
+	<br/> 
+	<br/> 
+	In Go, identifiers are either <code>exported</code> or <code>unexported</code> from a package. 
+	<br/> 
+
+	An exported identifier can be directly accessed by code in other packages when the respective package is imported. These identifiers start with a capital letter. 
+	<br/> 
+	Unexported identifiers start with a lowercase letter and can’t be directly accessed by code in other packages. But just because an identifier is unexported, it doesn’t mean other packages can’t indirectly access these identifiers.
 </step>
 
-<step title="Adding a prefix and suffix to the chain" src="doc/codewalk/main.go:/	key/,/key\], s\)">
-	The word stored in <code>s</code> is a new suffix. We add the new
-	prefix/suffix combination to the <code>chain</code> map by computing
-	the map key with <code>p.String</code> and appending the suffix
-	to the slice stored under that key.
-	<br/><br/>
-	The built-in <code>append</code> function appends elements to a slice
-	and allocates new storage when necessary. When the provided slice is
-	<code>nil</code>, <code>append</code> allocates a new slice.
-	This behavior conveniently ties in with the semantics of our map:
-	retrieving an unset key returns the zero value of the value type and
-	the zero value of <code>[]string</code> is <code>nil</code>.
-	When our program encounters a new prefix (yielding a <code>nil</code>
-	value in the map) <code>append</code> will allocate a new slice.
-	<br/><br/>
-	For more information about the <code>append</code> function and slices
-	in general see the
-	<a href="/doc/articles/slices_usage_and_internals.html">Slices: usage and internals</a> article.
+<step title="Map initialization" src="doc/codewalk/rssfeed/search/search.go:/var matchers/,/.*Matcher\)/">
+	A map is a <code>reference</code> type that you’re required to <code>make</code> in Go. If you don’t make the map first and assign it to your variable, you’ll receive errors when you try to use the map variable. This is because the zero value for a map variable is <code>nil</code>
+	<br/> 
+	<br/> 
+	In Go, all variables are initialized to their zero value. For numeric types, that value
+	is 0; for strings it’s an empty string; for Booleans it’s false; and for pointers, the zero value is nil.
 </step>
 
-<step title="Pushing the suffix onto the prefix" src="doc/codewalk/main.go:/p\.Shift/">
-	Before reading the next word our algorithm requires us to drop the
-	first word from the prefix and push the current suffix onto the prefix.
-	<br/><br/>
-	When in this state
+<step title="The Run function" src="doc/codewalk/rssfeed/search/search.go:/func[^\n]+Run/,/results\)\n}/">
+	The Run function contains the main control logic for the program. It’s a good representation of how Go programs can be structured to handle the launching and synchronization of goroutines that run concurrently.
+</step>
+
+<step title="The Run function prototype" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Run/,/{/">
+	To declare a function in Go, use the keyword <code>func</code> followed by the function name, any
+	parameters, and then any return values. In the case of <code>Run</code>, you have a single parameter called <code>searchTerm</code> of type <code>string</code>. The term the program will search against is
+	passed into the Run function, and if you look at the main function again, you can see
+	that exchange (see step <code>Entrypoint to the program</code>
+</step>
+
+<step title="Retrieving feeds" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Retrieve/,/}/">
+	The first thing that the Run function does is retrieve a list of data feeds. These feeds
+	are used to pull content from the internet that is then matched against the specified
+	search term.
+	<br/> 
+	<br/> 
+	You can see on that we make a function call to the function <code>RetrieveFeeds</code>. This function belongs to the search package (definition in file feed.go) and returns two values. The first return value is a <code>slice</code> of Feed type values. A slice is a reference type that implements a dynamic array. You use slices in Go to work with lists of data.
+	<br/> 
+	<br/> 
+	The second return value is an error. The error value is evaluated for
+	errors, and if an error did occur, the function Fatal from the log package is called.
+	The Fatal function accepts an error value and will log to the terminal window before
+	terminating the program.
+	<br/> 
+	<br/> 
+	Though not unique to Go, you can see that our functions can have multiple return
+	values. It’s common to declare functions that return a value and an error value just
+	like the <code>RetrieveFeeds</code> function. If an error occurs, never trust the other values being returned from the function. They should always be ignored, or else you run the risk of the code generating more errors or panics. This programming pattern is very common in golang and widely used, it is part of the idiomatic way of dealing with errors. This method may surprise people with background in other object oriented languages such as Java and Python, where such errors are handled through exceptions.
+</step>
+
+<step title="Value assignment and implicit variable declaration" src="doc/codewalk/rssfeed/search/search.go:/.*feeds\,/,/\n/">
+	Here you see the use of the short variable declaration operator (:=). This operator is
+	used to both declare and initialize variables at the same time. The type of each value
+	being returned is used by the compiler to determine the type for each variable,
+	respectively. The short variable declaration operator is just a shortcut to streamline
+	your code and make the code more readable. The variable it declares is no different
+	than any other variable you may declare when using the keyword var.
+</step>
+
+<step title="Channel" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Create/,/.*Result\)/">
+	we use the built-in function make to create an unbuffered channel. We use
+	the short variable declaration operator to declare and initialize the channel variable
+	with the call to make. A good rule of thumb when declaring variables is to use the keyword var when declaring variables that will be initialized to their zero value, and to 	use the short variable declaration operator when you’re providing extra initialization or making a function call
+	<br/> 
+	<br/> 
+	Channels are also a reference type in Go like maps and slices, but channels implement a queue of typed values that are used to communicate data between goroutines.
+	Channels provide inherent synchronization mechanisms to make communication safe
+</step>
+
+<step title="Channel synchronization and waitgroups" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Setup/,/.*feeds\)\)/">
+In Go, once the main function returns, the program terminates. Any goroutines that
+were launched and are still running at this time will also be terminated by the Go runtime. When you write concurrent programs, it’s best to cleanly terminate any goroutines that were launched prior to letting the main function return. Writing programs
+that can cleanly start and shut down helps reduce bugs and prevents resources from
+corruption.
+	<br/> 
+	<br/> 
+Our program is using a <code>WaitGroup</code> from the <code>sync</code> package to track all the goroutines we’re going to launch. A <code>WaitGroup</code> is a great way to track when a goroutine is finished performing its work. A <code>WaitGroup</code> is a counting semaphore, and we’ll use it to count off goroutines as they finish their work.
+	<br/> 
+	<br/> 
+We declare a variable of type WaitGroup from the sync package. Then we set the value of the WaitGroup variable to match the number of goroutines we’re going to launch. As you’ll soon see, we’ll process each feed concurrently with its own goroutine. As each goroutine completes its work, it will decrement the count of the WaitGroup variable, and once the variable gets to zero, we’ll know all the work is done.
+</step>
+
+<step title="Processing the data feeds" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Launch/,/.*feed\)/">
+	The code iterates through the list of data feeds we retrieved earlier and launch a goroutine for each one. To iterate over the slice of feeds, we use the keywords for range. The keyword range can be used with arrays, strings, slices, maps, and channels. When we use for range to iterate over a slice, we get two values back on each iteration. The first is the index position of the element we’re iterating over, and the second is a copy of the value in that element.
+</step>
+
+<step title="The loop" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Launch/,/.*feeds {/">
+This is the second time you see the blank identifier being used. You first saw it in
+main.go when we imported the matchers package. Now it’s being used as a substitution for the variable that would be assigned to the index value for the range call.
+When you have a function that returns multiple values, and you don’t have a need for
+one, you can use the blank identifier to ignore those values. In our case with this
+range, we won’t be using the index value, so the blank identifier allows us to ignore it
+</step>
+
+<step title="Using the map" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Retrieve a/,/.*default/">
+	We haven’t talked about how this map gets its values yet (see later). We check the map for a key that matches the feed type. When looking up a key in a map, you have two
+	options: 
+	* you can assign a single variable 
+	<br/> 
+	* or two variables for the lookup call. 
+	<br/> 
+	<br/> 
+	The first variable is always the value returned for the key lookup, and the second value, if specified, is a Boolean flag that reports whether the key exists or not. When a key doesn’t exist, the map will return the zero value for the type of value being stored in the map. When the key does exist, the map will return a copy of the value for that key.
+	<br/> 
+	<br/> 
+	We check whether the key was located in the map, and if it’s not, we
+	assign the default matcher to be used. This allows the program to function without
+	causing any issues or interruption for feeds that the program currently doesn’t support. Then we launch a goroutine to perform the search.
+</step>
+
+<step title="Using goroutines" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Launch the/,/.*feed\)/">
+	A <code>goroutine</code> is a function that’s launched to run independently from other functions in the program.
+	<br/>
+	<br/>
+	Use the keyword go to launch and schedule goroutines to run concurrently. We use the keyword go to launch an anonymous function as a goroutine. An anonymous function is a function that’s declared without a name. In our for range loop, we launch an anonymous function as a goroutine for each feed. This allows each feed to be processed independently in a concurrent fashion. 
+	<br/>
+	Anonymous functions can take parameters, which we declare for this anonymous
+	function. We declare the anonymous function to accept a value of type Matcher and the address of a value of type Feed. This means the variable feed is a pointer variable. Pointer variables are great for sharing variables between functions. They allow functions to access and change the state of a variable that was declared within the scope of a different function and possibly a different goroutine.
+	<br/>
+	The values of the matcher and feed variables are being passed into the anonymous function. In Go, all variables are passed by value. Since the value of a pointer variable is the address to the memory being pointed to, passing pointer variables between functions is still considered a pass by value.
+</step>
+
+
+<step title="The goroutine job" src="doc/codewalk/rssfeed/search/search.go:/Match\(matcher/,/.*Done\(\)/">
+	The goroutine calls a function called <code>Match</code>, which can be found
+	in the <code>match.go</code> code file. The Match function takes a value of type Matcher, a pointer to a value of type Feed, the search term, and the channel where the results are written to. Match will search the feed and output matches to the results channel.
+	<br/>
+	<br/>
+	Once the function call to Match completes, we execute the follwing line, which
+	is to decrement the WaitGroup count. Once every goroutine finishes calling the Match
+	function and the Done method, the program will know every feed has been processed.
+	There’s something else interesting about the method call to Done: the WaitGroup
+	value was never passed into the anonymous function as a parameter, yet the anonymous function has access to it.
+	<br/>
+	<br/>
+	Go supports closures and you’re seeing this in action. In fact, the <code>searchTerm</code> and <code>results</code> variables are also being accessed by the anonymous function via closures.
+	Thanks to closures, the function can access those variables directly without the need to
+	pass them in as parameters. The anonymous function isn’t given a copy of these variables; it has direct access to the same variables declared in the scope of the outer function. This is the reason why we don’t use closures for the matcher and feed variables.
+</step>
+
+<step title="Synchronizing the goroutines and displaying results" src="doc/codewalk/rssfeed/search/search.go:/\/\/ Launch a goroutine to monitor/,/Display\(results\)/">
+	This anonymous function takes no parameters and uses closures to access both the WaitGroup and results variables. This goroutine calls the method Wait on the WaitGroup value, which is <code>causing the goroutine to block until the count for the WaitGroup hits zero</code>. Once that happens, the goroutine calls the built-in function close on the channel, which as you’ll see causes the program to terminate.
+	<br/>
+	<br/>
+	The final piece of code in the Run function is on line 56. This is a call to the
+	Display function, which can be found in the match.go code file. Once this function
+	returns, the program terminates. This doesn’t happen until all the results in the channel are processed.
+</step>
+
+<step title="The feeds logic" src="doc/codewalk/rssfeed/search/feed.go:/package/,/.*data\.json.*/">
+	The function <code>RetrieveFeeds</code> reads the
+	data.json file and returns the slice of data feeds. These feeds drive the content that will be searched by the different matchers. Here are the first eight lines of code that can be found inside the feed.go code file.
+	<br/>
+	<br/>
+	 The code file is declared to be in package search. You can see that we import two packages from the standard library. The json package provides support for encoding and
+	decoding JSON and the os package provides support for accessing operating system
+	functionality like reading files. 
+	<br/>
+	<br/>
+	we declare a constant named dataFile, which is assigned a string that
+	specifies the relative path to the data file on disk. Since the Go compiler can deduce
+	the type from the value on the right side of the assignment operator, specifying the
+	type when declaring the constant is unnecessary. We also use a lowercase letter for the
+	name of the constant, which means this constant is unexported and can only be
+	directly accessed by code within the search package.
+</step>
+
+<step title="The data feeds file" src="doc/codewalk/rssfeed/data/data.json:/cnn/,/}/">
+	The data file contains an array of JSON documents. Each document in the data file provides a name of the site we’re getting the data from, a link to
+	the data, and the type of data we expect to receive.
+	These documents need to be decoded into a slice of struct types so we can use this
+	data in our program
+</step>
+
+<step title="The feed struct" src="doc/codewalk/rssfeed/search/feed.go:/\/\/ Feed contains/,/\n}/">
+	we declare a struct type named Feed, which is an exported type. This type is declared with three fields, each of which are strings that match the fields for each document in the data file. If you look at each field declaration, tags have been included to provide the metadata that the JSON decoding function needs 	to create the slice of Feed type values. Each tag maps a field name in the struct type to a field name in the document.
+</step>
+
+<step title="RetrieveFeeds function" src="doc/codewalk/rssfeed/search/feed.go:/\/\/ RetrieveFeeds/,/$/">
+	The function takes no parameters and returns two values. The first return value is a slice of pointers to <code>Feed type values</code>. The second return value is an <code>error value</code> that reports back if the function call was successful. As you’ll continue to see, returning error values is common practice in this code example and throughout the standard library.
+	<br/>
+	<br/>
+	we use the os package to open the data file. The call to the <code>Open</code> method takes the relative path to our data file and returns two values. The first return value is a pointer to a value of type <code>File</code>, and the second return value is an <code>error</code> to check if the call to Open was successful. We check the error value and return the error if we did have a problem opening the file. If we are successful in opening the file, we move to the section
 	<pre>
-p == Prefix{"I", "am"}
-s == "not" </pre>
-	the new value for <code>p</code> would be
-	<pre>
-p == Prefix{"am", "not"}</pre>
-	This operation is also required during text generation so we put
-	the code to perform this mutation of the slice inside a method on
-	<code>Prefix</code> named <code>Shift</code>.
+	// Schedule the file to be closed once
+	// the function returns.
+	defer file.Close()
+	</pre>
+	The keyword defer is used to schedule a function call to be executed right after a
+	function returns. It’s our responsibility to close the file once we’re done with it. By
+	using the keyword defer to schedule the call to the close method, we can guarantee
+	that the method will be called. This will happen even if the function panics and terminates unexpectedly. The keyword defer lets us write this statement close to where the opening of the file occurs, which helps with readability and reducing bugs.
 </step>
 
-<step title="The Shift method" src="doc/codewalk/main.go:/func[^\n]+Shift/,/\n}/">
-	The <code>Shift</code> method uses the built-in <code>copy</code>
-	function to copy the last len(p)-1 elements of <code>p</code> to
-	the start of the slice, effectively moving the elements
-	one index to the left (if you consider zero as the leftmost index).
-	<pre>
-p := Prefix{"I", "am"}
-copy(p, p[1:])
-// p == Prefix{"am", "am"}</pre>
-	We then assign the provided <code>word</code> to the last index
-	of the slice:
-	<pre>
-// suffix == "not"
-p[len(p)-1] = suffix
-// p == Prefix{"am", "not"}</pre>
+<step title="Using the JSON decoders" src="doc/codewalk/rssfeed/search/feed.go:/\/\/ Decode/,/$/">
+	We declare a nil slice named feeds that contains pointers to Feed type values.  We then make a call to the Decode method off the value returned by the NewDecoder function from the json package. The NewDecoder function takes the file handle we created from the method call to Open and returns a pointer to a value of type Decoder. From that value we call the Decode method, passing the address to the slice. The Decode method then decodes the data file and populates our slice with a set of Feed type values. The Decode method can accept any type
+	<br/>
+	<br/>
+	The last line of code returns the slice and error values back to the calling function. In this case there’s no need for the function to check the error value after the call to Decode. The function is complete and the calling function can check the error value and determine what to do next.
 </step>
 
-<step title="Generating text" src="doc/codewalk/main.go:/func[^\n]+Generate/,/\n}/">
-	The <code>Generate</code> method is similar to <code>Build</code>
-	except that instead of reading words from a <code>Reader</code>
-	and storing them in a map, it reads words from the map and
-	appends them to a slice (<code>words</code>).
-	<br/><br/>
-	<code>Generate</code> uses a conditional for loop to generate
-	up to <code>n</code> words.
+<step title="The interface type" src="doc/codewalk/rssfeed/search/match.go:7,17">
+	The type named Matcher is of type interface. Interfaces declare behavior that’s required to be implemented by struct or named types to satisfy the interface. The behavior of an interface is defined by the methods that are declared within the interface type.
+	<br/>
+	<br/>
+	In the case of the Matcher interface, there’s only one method declared, Search,
+	which takes a pointer to a value of type Feed and a search term of type string. The
+	method also returns two values: a slice of pointers to values of type Result and an
+	error value. 
+	<br/>
+	<br/>
+	You follow a naming convention in Go when naming interfaces. If the interface
+	type contains only one method, the name of the interface ends with the er suffix. This
+	is the exact case for our interface, so the name of the interface is Matcher. When multiple methods are declared within an interface type, the name of the interface should
+	relate to its general behavior.
+	<br/>
+	<br/>
+	For a user-defined type to implement an interface, the type in question needs to
+	implement all the methods that are declared within that interface type. Let's jump to the <code>default.go</code> file where such an example exists.
 </step>
 
-<step title="Getting potential suffixes" src="doc/codewalk/main.go:/choices/,/}\n/">
-	At each iteration of the loop we retrieve a list of potential suffixes
-	for the current prefix. We access the <code>chain</code> map at key
-	<code>p.String()</code> and assign its contents to <code>choices</code>.
-	<br/><br/>
-	If <code>len(choices)</code> is zero we break out of the loop as there
-	are no potential suffixes for that prefix.
-	This test also works if the key isn't present in the map at all:
-	in that case, <code>choices</code> will be <code>nil</code> and the
-	length of a <code>nil</code> slice is zero.
+<step title="An implementation of the Matcher interface" src="doc/codewalk/rssfeed/search/default.go">
+	We declare a struct type named defaultMatcher using an empty struct. An
+	empty struct allocates zero bytes when values of this type are created. They’re great
+	when you need a type but not any state. For the default matcher, we don’t need to
+	maintain any state; we only need to implement the interface
+	<br/>
+	<br/>
+	you see the implementation of the Matcher interface by	the defaultMatcher type. The implementation of the interface method Search just returns nil for both return values. Other implementations, such as the implementation for the RSS matcher, will implement the specific business rules for processing searches in their version of this method.
 </step>
 
-<step title="Choosing a suffix at random" src="doc/codewalk/main.go:/next := choices/,/Shift/">
-	To choose a suffix we use the
-	<code><a href="/pkg/math/rand/#Intn">rand.Intn</a></code> function.
-	It returns a random integer up to (but not including) the provided
-	value. Passing in <code>len(choices)</code> gives us a random index
-	into the full length of the list.
-	<br/><br/>
-	We use that index to pick our new suffix, assign it to
-	<code>next</code> and append it to the <code>words</code> slice.
-	<br/><br/>
-	Next, we <code>Shift</code> the new suffix onto the prefix just as
-	we did in the <code>Build</code> method.
+<step title="An implementation of the Matcher interface" src="doc/codewalk/rssfeed/search/default.go:13">
+	The declaration of the Search method is declared with a value receiver of type defaultMatcher. The use of a receiver with any function declaration declares a method that’s bound to the specified receiver type. In our case, the declaration of the Search method is now bound to values of type defaultMatcher. This means we can call the method Search from values and pointers of type defaultMatcher
 </step>
 
-<step title="Returning the generated text" src="doc/codewalk/main.go:/Join\(words/">
-	Before returning the generated text as a string, we use the
-	<code>strings.Join</code> function to join the elements of
-	the <code>words</code> slice together, separated by spaces.
+<step title="The Match function" src="doc/codewalk/rssfeed/search/match.go:19,33">
+	This is the function that performs the actual search using values or pointers that
+	implement the <code>Matcher</code> interface. This function accepts values of type <code>Matcher</code> as the first parameter. Only values or pointers that implement the Matcher interface will be accepted for this parameter. Since the defaultMatcher type now implements the interface declared with a value receiver, values or pointers of type defaultMatcher can be passed into this function.
+</step>
+<step title="Calling the search method" src="doc/codewalk/rssfeed/search/match.go:23,27">
+The Search method is called from the Matcher type value that was passed into the function. Here the specific implementation of the Search method for the value assigned to the Matcher variable is executed. 
+<br/>
+Once the Search method returns, the error value is checked for an error. If there’s an error, the function writes the error to the log and returns. If the search doesn’t return an error and there are results, the results are written to the channel so that they can be picked up by the main function that’s listening on that channel.
 </step>
 
-<step title="Command-line flags" src="doc/codewalk/main.go:/Register command-line flags/,/prefixLen/">
-	To make it easy to tweak the prefix and generated text lengths we
-	use the <code><a href="/pkg/flag/">flag</a></code> package to parse
-	command-line flags.
-	<br/><br/>
-	These calls to <code>flag.Int</code> register new flags with the
-	<code>flag</code> package. The arguments to <code>Int</code> are the
-	flag name, its default value, and a description. The <code>Int</code>
-	function returns a pointer to an integer that will contain the
-	user-supplied value (or the default value if the flag was omitted on
-	the command-line).
+<step title="The Display function" src="doc/codewalk/rssfeed/search/match.go:35,43">
+This is the function preventing the program from terminating until all the results from the search goroutines are received and logged. A bit of channel magic allows this function to process all of the results before returning. It’s based on how channels and the keyword range behaves when a channel is closed.
 </step>
 
-<step title="Program set up" src="doc/codewalk/main.go:/flag.Parse/,/rand.Seed/">
-	The <code>main</code> function begins by parsing the command-line
-	flags with <code>flag.Parse</code> and seeding the <code>rand</code>
-	package's random number generator with the current time.
-	<br/><br/>
-	If the command-line flags provided by the user are invalid the
-	<code>flag.Parse</code> function will print an informative usage
-	message and terminate the program.
+<step title="Channels again" src="doc/codewalk/rssfeed/search/match.go:29,32">
+ In the lines 30 through 32 of match.go, the search results were being written to the channel. Each search goroutine writes its results to the channel. 
 </step>
 
-<step title="Creating and building a new Chain" src="doc/codewalk/main.go:/c := NewChain/,/c\.Build/">
-	To create the new <code>Chain</code> we call <code>NewChain</code>
-	with the value of the <code>prefix</code> flag.
-	<br/><br/>
-	To build the chain we call <code>Build</code> with
-	<code>os.Stdin</code> (which implements <code>io.Reader</code>) so
-	that it will read its input from standard input.
+<step title="Reading results" src="doc/codewalk/rssfeed/search/match.go:38,42">
+The for range loop 	will block until a result is written to the channel. When the for range loop is woken up and  given those results (see previous step), the results are then immediately written to the log. Once the channel is closed on
+line 51 of the search.go code file, the for range loop is terminated and the Display
+function returns.
 </step>
 
-<step title="Generating and printing text" src="doc/codewalk/main.go:/c\.Generate/,/fmt.Println/">
-	Finally, to generate text we call <code>Generate</code> with
-	the value of the <code>words</code> flag and assigning the result
-	to the variable <code>text</code>.
-	<br/><br/>
-	Then we call <code>fmt.Println</code> to write the text to standard
-	output, followed by a carriage return.
+<step title="Back to the initialization phase" src="doc/codewalk/rssfeed/search/default.go:6,10">
+The default.go code file has a special function declared called init. You saw this
+function also declared in the main.go code file, and we talked about how all the init
+functions in the program would be called before the main function begins. When we import the following packages in the main package
+<pre>
+_ "github.com/goinaction/code/chapter2/sample/matchers"
+"github.com/goinaction/code/chapter2/sample/search"
+</pre>
+The compiler to find the init function in the default.go code file. Once the compiler sees the init function, it’s scheduled to be called prior to the main function being called.
+<br/>
+<br/>
+The init function in the default.go code file is creating a value of the <code>defaultMatcher</code> type and passing that value to the <code>Register</code> function that can be found in the search.go code file.
+<pre>
+// Register is called to register a matcher for use by the program.
+func Register(feedType string, matcher Matcher) {
+	if _, exists := matchers[feedType]; exists {
+		log.Fatalln(feedType, "Matcher already registered")
+	}
+
+	log.Println("Register", feedType, "matcher")
+	matchers[feedType] = matcher
+}
+</pre>
+This function is responsible for adding the Matcher value to the map of registered
+matchers. All of this registration needs to happen before the main function gets called.
+Using init functions is a great way to accomplish this type of initialized registration
 </step>
 
-<step title="Using this program" src="doc/codewalk/main.go">
-	To use this program, first build it with the
-	<a href="/cmd/go/">go</a> command:
-	<pre>
-$ go build main.go</pre>
-	And then execute it while piping in some input text:
-	<pre>
-$ echo "a man a plan a canal panama" \
-	| ./markov -prefix=1
-a plan a man a plan a canal panama</pre>
-	Here's a transcript of generating some text using the Go distribution's
-	README file as source material:
-	<pre>
-$ ./markov -words=10 &lt; $GOROOT/README
-This is the source code repository for the Go source
-$ ./markov -prefix=1 -words=10 &lt; $GOROOT/README
-This is the go directory (the one containing this README).
-$ ./markov -prefix=1 -words=10 &lt; $GOROOT/README
-This is the variable if you have just untarred a</pre>
+<step title="RSS matcher" src="doc/codewalk/rssfeed/matchers/rss.go">
+Everything we’ve reviewed up to now was to allow the implementation of different matcher types to run and search content within the program’s framework. The structure of the RSS
+matcher is similar to the structure of the default matcher. It’s the implementation of
+the interface method Search that’s different and in the end gives each matcher its
+uniqueness.
+
+<br/>
+<br/>
+The implementation of the RSS
+matcher pulls down these RSS documents, searches the title and description fields for
+the search term, and sends the results over the results channel
 </step>
 
-<step title="An exercise for the reader" src="doc/codewalk/main.go">
-	The <code>Generate</code> function does a lot of allocations when it
-	builds the <code>words</code> slice. As an exercise, modify it to
-	take an <code>io.Writer</code> to which it incrementally writes the
-	generated text with <code>Fprint</code>.
-	Aside from being more efficient this makes <code>Generate</code>
-	more symmetrical to <code>Build</code>.
+<step title="RSS file imports" src="doc/codewalk/rssfeed/matchers/rss.go:1,12">
+This code file
+can be found in a folder called matchers, so the package name is matchers. Next we
+have six imports from the standard library and one import to the search package.
+Again, we have some packages from the standard library being imported from subfolders within the standard library, such as xml and http. Just like with the json package, the name of the last folder in the path represents the name of the package.
+</step>
+
+<step title="RSS Data types" src="doc/codewalk/rssfeed/matchers/rss.go:14,58">
+There are four struct types that are used to decode the RSS document, so we can
+use the document data in our program.
+If you match these structures to the RSS document from any of the feed links, you’ll
+see how everything correlates. Decoding XML is identical to how we decoded JSON in
+the feed.go code file
+</step>
+
+<step title="rssMatcher implementation of Matcher" src="doc/codewalk/rssfeed/matchers/rss.go:60,61">
+This looks just like how we declared the defaultMatcher type. We use an empty
+struct since we don’t need to maintain any state; we just implement the Matcher interface. 
+</step>
+
+<step title="Init function" src="doc/codewalk/rssfeed/matchers/rss.go:63,67">
+Just like you saw with the default matcher, the init function registers a value of the
+rssMatcher type with the program for use
+</step>
+
+<step title="Retrieve content from RSS sources" src="doc/codewalk/rssfeed/matchers/rss.go:114,140">
+The unexported method retrieve performs the logic for pulling the RSS document
+from the web for each individual feed link. You can see the use of the Get
+method from the http package. Go makes it really easy to make web requests using the http package. When the Get method returns, we’ll get back a pointer to a value of type Response. 
+<br/>
+<br/>
+After checking for errors, we need to schedule the call to the Close method. We check the StatusCode field of the Response value to verify we received a 200. Anything other than 200 must be handled as an error and we do just that. If the value isn’t 200, we then return a custom error using the Errorf function from the fmt package. The last three lines of code are similar to how we decoded the JSON data file. This time we use the xml package and call the same function named NewDecoder, which returns a pointer to a Decoder value. With the pointer, we call the Decode method passing the address of the local variable named document of type rssDocument. Then the address to the rssDocument type value and the error from
+the Decode method call are returned.
+</step>
+
+<step title="Implementing the Matcher interface" src="doc/codewalk/rssfeed/matchers/rss.go:69,112">
+We start with the declaration of the results variable, which will be used to store and return any results that may be found. We use the keyword var and declare a nil slice of pointers to Result type values. Next, we make a web call using the retrieve method we just reviewed.
+<br/>
+<br/>
+The call to the retrieve method returns a pointer to a value of type rssDocument and
+an error value. Then, as you’ve seen throughout the code, we check the error value
+for errors and return if there was an error. If no error exists, we then iterate through
+the results performing the match of the search term against the title and description
+of the retrieved RSS document.
+<br/>
+<br/>
+</step>
+
+<step title="Manipulating slices" src="doc/codewalk/rssfeed/matchers/rss.go:81,94">
+Since the value of document.Channel.Item is a slice of item type values, we use a for
+range loop  all the items. We use the MatchString function from the regexp package to match the search term against the content in the Title field of the channelItem value. Then we check for errors. If there are no errors, we move to check the results of the match.
+<br/>
+<br/>
+If the value of matched is true after the call to the MatchString method, we use the
+built-in function append to add the search results to the results slice. The built-in
+function append will grow the length and capacity of the slice as it needs to.
+<br/>
+<br/>
+he first parameter to
+append is the value of the slice you want to append to, and the second parameter is the
+value you want to append. In our case, we use a struct literal to declare and initialize a
+value of type Result, and then we use the ampersand (&amp;) operator to get the address
+of this new value, which is stored in the slice.
+</step>
+
+<step title="Returning the results" src="doc/codewalk/rssfeed/matchers/rss.go:97,108">
+After the title is checked for matches, We perform the same logic
+again for the description field. Finally, the method returns the results to
+the calling function.
+</step>
+
+<step title="Summary of what we've seen so far" src="doc/codewalk/rssfeed/main.go">
+
+* Every code file belongs to a package, and that package name should be the
+same as the folder the code file exists in. 
+<br/>
+* Go provides several ways to declare and initialize variables. If the value of a
+variable isn’t explicitly initialized, the compiler will initialize the variable to its
+zero value.
+<br/>
+* Pointers are a way of sharing data across functions and goroutines.
+<br/>
+* Concurrency and synchronization are accomplished by launching goroutines
+and using channels.
+<br/>
+* Go provides built-in functions to support using Go’s internal data structures.
+<br/>
+* The standard library contains many packages that will let you do some powerful
+things.
+<br/>
+* Interfaces in Go allow you to write generic code and frameworks.
 </step>
 
 </codewalk>
